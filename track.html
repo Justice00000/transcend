@@ -1,96 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>Platinumlinkslogitics | Track</title>
-
-  <!-- Stylesheets -->
-  <link href="css/bootstrap.css" rel="stylesheet">
-  <link href="css/style.css" rel="stylesheet">
-  <link href="css/responsive.css" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="css/track.css">
-  <link rel="shortcut icon" href="images/favicon.png" type="image/x-icon">
-  <link rel="icon" href="images/favicon.png" type="image/x-icon">
-
-  <!-- Responsive Meta -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta charset="utf-8">
+    <title>Tracking Result</title>
+    <link href="css/bootstrap.css" rel="stylesheet">
 </head>
+<body>
+<div class="container mt-5">
+    <h2>Tracking Result</h2>
+    <hr>
 
-<body class="hidden-bar-wrapper">
-  <div class="page-wrapper">
-    <!-- Main Header -->
-    <header class="main-header header-style-two">
-      <div class="auto-container">
-        <div class="header-inner">
-          <!-- You can add logo or nav here -->
-        </div>
-      </div>
-    </header>
+    <?php if ($tracking_details): ?>
+        <h4>Tracking Number: <?= htmlspecialchars($tracking_details['tracking_number']) ?></h4>
+        <p>Status: <?= htmlspecialchars($tracking_details['status']) ?></p>
+        <p>Sender: <?= htmlspecialchars($tracking_details['sender_name']) ?> (<?= htmlspecialchars($tracking_details['sender_contact']) ?>)</p>
+        <p>Receiver: <?= htmlspecialchars($tracking_details['receiver_name']) ?> (<?= htmlspecialchars($tracking_details['receiver_contact']) ?>)</p>
+        <p>Dispatch Location: <?= htmlspecialchars($tracking_details['dispatch_location']) ?></p>
+        <p>Destination: <?= htmlspecialchars($tracking_details['destination']) ?></p>
+        <p>Dispatch Date: <?= htmlspecialchars($tracking_details['dispatch_date']) ?></p>
+        <p>Delivery Date: <?= htmlspecialchars($tracking_details['delivery_date']) ?></p>
+        <p>Shipment Mode: <?= htmlspecialchars($tracking_details['shipment_mode']) ?></p>
+        <p>Carrier: <?= htmlspecialchars($tracking_details['carrier']) ?> (Ref: <?= htmlspecialchars($tracking_details['carrier_ref_no']) ?>)</p>
+        <p>Weight: <?= htmlspecialchars($tracking_details['weight']) ?> kg</p>
+        <p>Payment Mode: <?= htmlspecialchars($tracking_details['payment_mode']) ?></p>
+        <p>Description: <?= htmlspecialchars($tracking_details['package_desc']) ?></p>
+        <?php if (!empty($tracking_details['package_image'])): ?>
+            <img src="<?= htmlspecialchars($tracking_details['package_image']) ?>" width="300" alt="Package Image">
+        <?php endif; ?>
+    <?php else: ?>
+        <p style="color:red;"><?= htmlspecialchars($error_message) ?></p>
+    <?php endif; ?>
 
-    <!-- Page Title -->
-    <section class="page-title" style="background-image:url(https://getfastlogistics.com/images/background/12.jpg);">
-      <div class="auto-container">
-        <h2>Track & Trace</h2>
-        <div class="separater"></div>
-      </div>
-    </section>
-
-    <!-- Breadcrumb -->
-    <div class="breadcrumb-outer">
-      <div class="auto-container">
-        <ul class="bread-crumb text-center">
-          <li><a href="https://platinumlinkslogitics.com">Home</a> <span>/</span></li>
-          <li>Track & Trace</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Track Form Section -->
-    <section class="sidebar-page-container">
-      <div class="auto-container">
-        <div class="row clearfix">
-          <div class="content-side col-lg-12 col-md-12 col-sm-12">
-            <div class="track-section">
-              <div class="sec-title-two sec-title">
-                <h2>Track & <span style="color:#ffad2b;">Trace Shipment</span></h2>
-                <div class="separater"></div>
-              </div>
-              <div class="track-form-two">
-                <form method="post" action="track.php">
-                  <div class="form-group">
-                    <label for="trackId">Enter Tracking Number Here</label>
-                  </div>
-                  <div class="form-group">
-                    <input type="text" name="trackId" id="trackId" placeholder="Enter your tracking number e.g CRG-11-XXXX" required>
-                    <button type="submit" name="trackingsub" class="theme-btn submit-btn" style="background:#ffad2b;">Track Your Shipment</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <div class="footer-bottom">
-      <div class="copyright"> &copy; 2024 / ALL RIGHTS RESERVED</div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="js1/jquery.js"></script>
-  <script src="js1/popper.min.js"></script>
-  <script src="js1/bootstrap.min.js"></script>
-  <script src="js1/jquery.mCustomScrollbar.concat.min.js"></script>
-  <script src="js1/jquery.fancybox.js"></script>
-  <script src="js1/appear.js"></script>
-  <script src="js1/owl.js"></script>
-  <script src="js1/wow.js"></script>
-  <script src="js1/jquery-ui.js"></script>
-  <script src="js1/script.js"></script>
+    <br><a href="track.html" class="btn btn-primary">Back to Tracking Page</a>
+</div>
 </body>
-
 </html>
