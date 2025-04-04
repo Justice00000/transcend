@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
         };
         
         // Make the fetch request to the API
-        fetch('https://serverside-yugv.onrender.com/api/track', options)
+        fetch('https://serverside-yugv.onrender.com/', options)
             .then(response => {
                 console.log('Response status:', response.status); // Add logging
                 if (!response.ok) {
