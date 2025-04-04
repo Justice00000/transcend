@@ -41,14 +41,16 @@ document.addEventListener("DOMContentLoaded", function() {
         };
         
         // Make the fetch request to the API
-        fetch('https://serverside-yugv.onrender.com', options)
+        fetch('https://serverside-yugv.onrender.com/api/track', options)
             .then(response => {
+                console.log('Response status:', response.status); // Add logging
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('Received data:', data); // Add logging
                 if (data.found) {
                     // Display the tracking information with progress bar
                     displayTrackingSuccess(data);
@@ -64,12 +66,13 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(error => {
                 // Handle error
+                console.error('Full error:', error); // More detailed error logging
                 displayTrackingResult(`
                     <div class="alert alert-danger">
-                        <p>Error connecting to tracking service. Please try again later.</p>
+                        <p>Error connecting to tracking service:</p>
+                        <p>${error.message}</p>
                     </div>
                 `);
-                console.error('Error:', error);
             });
     }
     
