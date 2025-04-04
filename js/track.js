@@ -40,8 +40,8 @@ document.addEventListener("DOMContentLoaded", function() {
             body: JSON.stringify({ trackId: trackingId })
         };
         
-        // Make the fetch request to the API
-        fetch('https://serverside-yugv.onrender.com/', options)
+        // Change this line to use the correct API endpoint
+        fetch('https://serverside-yugv.onrender.com/api/track', options)
             .then(response => {
                 console.log('Response status:', response.status); // Add logging
                 if (!response.ok) {
