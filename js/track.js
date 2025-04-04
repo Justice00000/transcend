@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
         };
         
         // Make the fetch request to the API
-        fetch('/api/track', options)
+        fetch('https://serverside-yugv.onrender.com', options)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
