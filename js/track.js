@@ -1,103 +1,57 @@
-// track.js - Client-side JavaScript for Tracking Functionality with Dynamic Progress Bar
+// track.js - Client-side JavaScript for Tracking Functionality with Manual Progress Bar Control
 
-class TrackingProgressBar {
-    constructor() {
-        // Status to percentage mapping
-        this.statusPercentageMap = {
-            "Order Processing": 10,
-            "Order Processed": 20,
-            "Shipment Created": 30,
-            "Package Received": 40,
-            "In Transit": 60,
-            "Customs Clearance": 70,
-            "Arrived at Destination": 80,
-            "Out for Delivery": 90,
-            "Delivered": 100
-        };
-    }
-
-    // Initialize progress bar elements
-    initialize() {
-        this.movingline = document.getElementById("movingline");
-        this.pointerImg = document.getElementById("pointer_img");
-        this.percCount = document.getElementById("perc_count");
-
-        if (!this.movingline || !this.pointerImg || !this.percCount) {
-            console.error("Progress bar elements not found");
-            return null;
-        }
-
-        return this;
-    }
-
-    // Set progress to a specific percentage
-    setProgress(percentage) {
-        // Ensure percentage is between 0 and 100
-        const clampedPercentage = Math.max(0, Math.min(100, percentage));
-
-        this.movingline.style.width = `${clampedPercentage}%`;
-        this.pointerImg.style.left = `${clampedPercentage}%`;
-        this.percCount.innerText = `${Math.round(clampedPercentage)}%`;
-
-        return this;
-    }
-
-    // Animate progress to a target percentage
-    animateTo(targetPercentage, duration = 1000) {
-        const startPercentage = parseFloat(this.movingline.style.width) || 0;
-        const startTime = performance.now();
-
-        const animate = (currentTime) => {
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-
-            // Ease in-out interpolation
-            const easedProgress = progress < 0.5 
-                ? 4 * progress * progress * progress 
-                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-            const currentPercentage = startPercentage + 
-                (targetPercentage - startPercentage) * easedProgress;
-
-            this.setProgress(currentPercentage);
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        requestAnimationFrame(animate);
-        return this;
-    }
-
-    // Get percentage for a specific status
-    getPercentageForStatus(status) {
-        return this.statusPercentageMap[status] || 0;
-    }
-
-    // Add or update a custom status
-    addCustomStatus(status, percentage) {
-        this.statusPercentageMap[status] = percentage;
-        return this;
-    }
-
-    // Increment progress
-    increment(amount = 10) {
-        const currentPercentage = parseFloat(this.movingline.style.width) || 0;
-        return this.setProgress(Math.min(currentPercentage + amount, 100));
-    }
-
-    // Decrement progress
-    decrement(amount = 10) {
-        const currentPercentage = parseFloat(this.movingline.style.width) || 0;
-        return this.setProgress(Math.max(currentPercentage - amount, 0));
-    }
-}
-
-// Main tracking functionality
 document.addEventListener("DOMContentLoaded", function() {
-    // Global progress bar instance
-    window.trackingProgressBar = null;
+    // Progress Bar Controller
+    const ProgressBarController = {
+        movingline: null,
+        pointerImg: null,
+        percCount: null,
+        
+        // Initialize the progress bar elements
+        init: function() {
+            this.movingline = document.getElementById("movingline");
+            this.pointerImg = document.getElementById("pointer_img");
+            this.percCount = document.getElementById("perc_count");
+        },
+        
+        // Manually set progress
+        setProgress: function(percentage) {
+            // Ensure percentage is between 0 and 100
+            percentage = Math.max(0, Math.min(100, percentage));
+            
+            if (!this.movingline || !this.pointerImg || !this.percCount) {
+                this.init();
+            }
+            
+            if (this.movingline && this.pointerImg && this.percCount) {
+                this.movingline.style.width = `${percentage}%`;
+                this.pointerImg.style.left = `${percentage}%`;
+                this.percCount.innerText = `${percentage}%`;
+            }
+        },
+        
+        // Increment progress
+        incrementProgress: function(amount) {
+            const currentProgress = this.getCurrentProgress();
+            this.setProgress(currentProgress + amount);
+        },
+        
+        // Decrement progress
+        decrementProgress: function(amount) {
+            const currentProgress = this.getCurrentProgress();
+            this.setProgress(currentProgress - amount);
+        },
+        
+        // Get current progress
+        getCurrentProgress: function() {
+            if (!this.movingline) this.init();
+            return this.movingline ? 
+                parseFloat(this.movingline.style.width) || 0 : 0;
+        }
+    };
+
+    // Expose progress bar controller to global scope
+    window.progressBarController = ProgressBarController;
 
     // Get the form element
     const trackForm = document.getElementById('tracking-form');
@@ -139,17 +93,17 @@ document.addEventListener("DOMContentLoaded", function() {
             body: JSON.stringify({ trackId: trackingId })
         };
         
-        // Fetch tracking information
+        // Change this line to use the correct API endpoint
         fetch('https://serverside-yugv.onrender.com/api/track', options)
             .then(response => {
-                console.log('Response status:', response.status);
+                console.log('Response status:', response.status); // Add logging
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Received data:', data);
+                console.log('Received data:', data); // Add logging
                 if (data.found) {
                     // Display the tracking information with progress bar
                     displayTrackingSuccess(data);
@@ -165,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(error => {
                 // Handle error
-                console.error('Full error:', error);
+                console.error('Full error:', error); // More detailed error logging
                 displayTrackingResult(`
                     <div class="alert alert-danger">
                         <p>Error connecting to tracking service:</p>
@@ -177,25 +131,27 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // Function to display tracking success information with progress bar
     function displayTrackingSuccess(data) {
-        // Create the HTML for the tracking result
-        let resultHTML = buildTrackingResultHTML(data);
+        // Calculate progress percentage based on status
+        let progressPercentage = calculateProgressPercentage(data.status);
         
-        // Display the tracking result
-        displayTrackingResult(resultHTML);
-        
-        // Initialize and animate progress bar
-        window.trackingProgressBar = new TrackingProgressBar().initialize();
-        if (window.trackingProgressBar) {
-            window.trackingProgressBar
-                .setProgress(0)  // Start at 0
-                .animateTo(calculateProgressPercentage(data.status));
-        }
-    }
-    
-    // Function to build tracking result HTML
-    function buildTrackingResultHTML(data) {
         // Format the estimated delivery date if it exists
-        let estimatedDelivery = formatEstimatedDelivery(data.estimated_delivery);
+        let estimatedDelivery = data.estimated_delivery;
+        if (estimatedDelivery) {
+            try {
+                // Check if it's already formatted
+                if (!estimatedDelivery.includes('/')) {
+                    const date = new Date(estimatedDelivery);
+                    estimatedDelivery = date.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                }
+            } catch (e) {
+                // Keep original format if parsing fails
+            }
+        }
         
         // Create the HTML for the tracking result
         let resultHTML = `
@@ -211,11 +167,41 @@ document.addEventListener("DOMContentLoaded", function() {
         
         // Add additional info if available
         if (data.additional_info) {
-            resultHTML += buildAdditionalInfoHTML(data.additional_info);
+            const info = data.additional_info;
+            resultHTML += `
+                <hr>
+                <h4>Detailed Information</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Sender Details</h5>
+                        ${info.sender_name ? `<p><strong>Name:</strong> ${info.sender_name}</p>` : ''}
+                        ${info.sender_address ? `<p><strong>Address:</strong> ${info.sender_address}</p>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Receiver Details</h5>
+                        ${info.receiver_name ? `<p><strong>Name:</strong> ${info.receiver_name}</p>` : ''}
+                        ${info.receiver_address ? `<p><strong>Address:</strong> ${info.receiver_address}</p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="package-details">
+                    <h5>Package Details</h5>
+                    <div class="row">
+                        ${info.weight ? `<div class="col-md-4"><p><strong>Weight:</strong> ${info.weight}</p></div>` : ''}
+                        ${info.quantity ? `<div class="col-md-4"><p><strong>Quantity:</strong> ${info.quantity}</p></div>` : ''}
+                        ${info.shipment_mode ? `<div class="col-md-4"><p><strong>Shipment Mode:</strong> ${info.shipment_mode}</p></div>` : ''}
+                        ${info.payment_mode ? `<div class="col-md-4"><p><strong>Payment Mode:</strong> ${info.payment_mode}</p></div>` : ''}
+                        ${info.carrier ? `<div class="col-md-4"><p><strong>Carrier:</strong> ${info.carrier}</p></div>` : ''}
+                        ${info.dispatch_date ? `<div class="col-md-4"><p><strong>Dispatch Date:</strong> ${info.dispatch_date}</p></div>` : ''}
+                    </div>
+                    ${info.package_desc ? `<p><strong>Package Description:</strong> ${info.package_desc}</p>` : ''}
+                </div>
+            `;
         }
         
-        // Add progress bar and status message
         resultHTML += `
+                </div>
+                
                 <div id="trackline_wrap">
                     <div id="grey_line">
                         <div id="startpoint"></div>
@@ -228,46 +214,54 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 </div>
                 
+                <div class="tracking-tools" style="margin-top: 20px;">
+                    <h4>Progress Bar Controls</h4>
+                    <div class="flex space-x-2">
+                        <input type="number" id="progress-input" min="0" max="100" 
+                               class="border p-2 rounded" placeholder="Enter percentage">
+                        <button id="set-progress-btn" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded">
+                            Set Progress
+                        </button>
+                        <button id="increment-progress-btn" 
+                                class="bg-green-500 text-white px-4 py-2 rounded">
+                            +10%
+                        </button>
+                        <button id="decrement-progress-btn" 
+                                class="bg-red-500 text-white px-4 py-2 rounded">
+                            -10%
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="tracking-message">
                     <p>${getStatusMessage(data.status)}</p>
                 </div>
             </div>
         `;
         
-        return resultHTML;
-    }
-    
-    // Function to build additional info HTML
-    function buildAdditionalInfoHTML(info) {
-        return `
-            <hr>
-            <h4>Detailed Information</h4>
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Sender Details</h5>
-                    ${info.sender_name ? `<p><strong>Name:</strong> ${info.sender_name}</p>` : ''}
-                    ${info.sender_address ? `<p><strong>Address:</strong> ${info.sender_address}</p>` : ''}
-                </div>
-                <div class="col-md-6">
-                    <h5>Receiver Details</h5>
-                    ${info.receiver_name ? `<p><strong>Name:</strong> ${info.receiver_name}</p>` : ''}
-                    ${info.receiver_address ? `<p><strong>Address:</strong> ${info.receiver_address}</p>` : ''}
-                </div>
-            </div>
-            
-            <div class="package-details">
-                <h5>Package Details</h5>
-                <div class="row">
-                    ${info.weight ? `<div class="col-md-4"><p><strong>Weight:</strong> ${info.weight}</p></div>` : ''}
-                    ${info.quantity ? `<div class="col-md-4"><p><strong>Quantity:</strong> ${info.quantity}</p></div>` : ''}
-                    ${info.shipment_mode ? `<div class="col-md-4"><p><strong>Shipment Mode:</strong> ${info.shipment_mode}</p></div>` : ''}
-                    ${info.payment_mode ? `<div class="col-md-4"><p><strong>Payment Mode:</strong> ${info.payment_mode}</p></div>` : ''}
-                    ${info.carrier ? `<div class="col-md-4"><p><strong>Carrier:</strong> ${info.carrier}</p></div>` : ''}
-                    ${info.dispatch_date ? `<div class="col-md-4"><p><strong>Dispatch Date:</strong> ${info.dispatch_date}</p></div>` : ''}
-                </div>
-                ${info.package_desc ? `<p><strong>Package Description:</strong> ${info.package_desc}</p>` : ''}
-            </div>
-        `;
+        // Display the tracking result
+        displayTrackingResult(resultHTML);
+        
+        // Initialize the progress animation
+        animateProgressBar(progressPercentage);
+        
+        // Add event listeners for manual progress control
+        document.getElementById('set-progress-btn')?.addEventListener('click', () => {
+            const progressInput = document.getElementById('progress-input');
+            const percentage = parseInt(progressInput.value);
+            if (!isNaN(percentage)) {
+                ProgressBarController.setProgress(percentage);
+            }
+        });
+        
+        document.getElementById('increment-progress-btn')?.addEventListener('click', () => {
+            ProgressBarController.incrementProgress(10);
+        });
+        
+        document.getElementById('decrement-progress-btn')?.addEventListener('click', () => {
+            ProgressBarController.decrementProgress(10);
+        });
     }
     
     // Function to display tracking result
@@ -280,25 +274,25 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
     
-    // Function to format estimated delivery date
-    function formatEstimatedDelivery(estimatedDelivery) {
-        if (!estimatedDelivery) return null;
+    // Function to animate the progress bar
+    function animateProgressBar(targetPercentage) {
+        const movingline = document.getElementById("movingline");
+        const pointerImg = document.getElementById("pointer_img");
+        const percCount = document.getElementById("perc_count");
         
-        try {
-            // Check if it's already formatted
-            if (!estimatedDelivery.includes('/')) {
-                const date = new Date(estimatedDelivery);
-                return date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
+        if (!movingline || !pointerImg || !percCount) return;
+        
+        let currentPercentage = 0;
+        const interval = setInterval(() => {
+            if (currentPercentage <= targetPercentage) {
+                movingline.style.width = currentPercentage + "%";
+                pointerImg.style.left = currentPercentage + "%";
+                percCount.innerText = currentPercentage + "%";
+                currentPercentage++;
+            } else {
+                clearInterval(interval);
             }
-            return estimatedDelivery;
-        } catch (e) {
-            return estimatedDelivery;
-        }
+        }, 20); // Animation speed
     }
     
     // Function to calculate progress percentage based on status
@@ -335,14 +329,3 @@ document.addEventListener("DOMContentLoaded", function() {
         return messageMap[status] || "Tracking status: " + status;
     }
 });
-
-// Expose methods for manual progress bar control
-// You can now use these in the browser console or attach to buttons
-/*
-Example usage:
-- window.trackingProgressBar.setProgress(50)  // Set to 50%
-- window.trackingProgressBar.increment()      // Increment by 10%
-- window.trackingProgressBar.decrement()      // Decrement by 10%
-- window.trackingProgressBar.animateTo(75)    // Animate to 75%
-- window.trackingProgressBar.addCustomStatus('New Status', 55)  // Add a custom status
-*/
